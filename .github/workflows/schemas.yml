@@ -9,6 +9,13 @@ on:
   repository_dispatch:
     types: [generate-pipeline-schemas]
 
+  push:
+    branches:
+      - feat/use-docker
+
+env:
+  HAYSTACK_REF: ${{ github.event.client_payload.ref || "main" }}
+
 jobs:
 
   run:
@@ -18,23 +25,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.7
-
-      - name: Install system dependencies
-        run: sudo apt update && sudo apt-get install libsndfile1 ffmpeg
-
-      - name: Install Haystack
-        # FIXME: seems like a one-pass install of `[all]` does not work. Thanks `pyworld` :(
-        run: |
-          pip install --upgrade pip
-          pip install git+https://github.com/deepset-ai/haystack.git#egg=farm-haystack
-          pip install git+https://github.com/deepset-ai/haystack.git#egg=farm-haystack[all]
-
       - name: Update schema
-        run: python .github/utils/generate_json_schema.py
+        run: |
+          docker run -it -v "${PWD}:/haystack-json-schema" "docker.io/deepset/haystack:base-cpu-${HAYSTACK_REF}" python /haystack-json-schema/.github/utils/generate_json_schema.py
 
       - name: Commit files
         run: |
@@ -44,9 +37,9 @@ jobs:
           git add .
           git commit -m "Update Schema" -a || echo "No changes to commit"
           git push
-          
-      - uses: act10ns/slack@v1
-        with:
-         status: ${{ job.status }}
-         channel: '#haystack'
-        if: failure() && github.repository_owner == 'deepset-ai' && github.ref == 'refs/heads/main'
+
+      # - uses: act10ns/slack@v1
+      #   with:
+      #    status: ${{ job.status }}
+      #    channel: '#haystack'
+      #   if: failure() && github.repository_owner == 'deepset-ai' && github.ref == 'refs/heads/main'
