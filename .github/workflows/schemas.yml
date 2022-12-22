@@ -27,8 +27,8 @@ jobs:
 
       - name: Update schema
         run: |
-          echo "${{ github.event }}"
-          docker run -it -v "${PWD}:/haystack-json-schema" "docker.io/deepset/haystack:base-cpu-${HAYSTACK_REF}" python /haystack-json-schema/.github/utils/generate_json_schema.py
+          echo "${{ toJSON(github.event) }}"
+          docker run -t -v "${PWD}:/haystack-json-schema" "docker.io/deepset/haystack:base-cpu-${HAYSTACK_REF}" python /haystack-json-schema/.github/utils/generate_json_schema.py
 
       - name: Commit files
         run: |
