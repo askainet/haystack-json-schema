@@ -14,7 +14,7 @@ on:
       - feat/use-docker
 
 env:
-  HAYSTACK_REF: ${{ github.event.client_payload.ref || "main" }}
+  HAYSTACK_REF: ${{ github.event.client_payload.ref || 'main' }}
 
 jobs:
 
@@ -27,6 +27,7 @@ jobs:
 
       - name: Update schema
         run: |
+          echo "${{ github.event }}"
           docker run -it -v "${PWD}:/haystack-json-schema" "docker.io/deepset/haystack:base-cpu-${HAYSTACK_REF}" python /haystack-json-schema/.github/utils/generate_json_schema.py
 
       - name: Commit files
